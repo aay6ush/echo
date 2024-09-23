@@ -14,13 +14,16 @@ datasource db {
 }
 
 model User {
-  id            String        @id @default(cuid())
+  id            String    @id @default(cuid())
   name          String
-  email         String        @unique
+  email         String    @unique
   emailVerified DateTime?
   image         String?
   password      String?
   accounts      Account[]
+  servers       Server[]
+  members       Member[]
+  channels      Channel[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -67,4 +70,54 @@ model PasswordResetToken {
   expiresAt DateTime
 
   @@unique([email, token])
+}
+
+model Server {
+  id         String    @id @default(cuid())
+  name       String
+  image      String
+  inviteCode String
+  members    Member[]
+  channels   Channel[]
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum MemberRole {
+  GUEST
+  MODERATOR
+  ADMIN
+}
+
+model Member {
+  id   String     @id @default(cuid())
+  role MemberRole @default(GUEST)
+
+  serverId String
+  server   Server @relation(fields: [serverId], references: [id], onDelete: Cascade)
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+enum ChannelType {
+  TEXT
+  VIDEO
+  AUDIO
+}
+
+model Channel {
+  id   String      @id @default(cuid())
+  name String
+  type ChannelType @default(TEXT)
+
+  serverId String
+  server   Server @relation(fields: [serverId], references: [id], onDelete: Cascade)
+
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
