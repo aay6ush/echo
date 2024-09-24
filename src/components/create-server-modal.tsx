@@ -25,6 +25,7 @@ import { Input } from "@/components/ui/input";
 import { PlusIcon } from "lucide-react";
 import { UploadButton } from "@/lib/uploadthings";
 import Image from "next/image";
+import axios from "axios";
 
 const formSchema = z.object({
   serverName: z.string().min(2, {
@@ -42,9 +43,15 @@ export function CreateServerModal() {
     },
   });
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log(values);
+  async function onSubmit(values: z.infer<typeof formSchema>) {
+    try {
+      await axios.post("/api/server", values);
+    } catch (error) {
+      console.error(error);
+    }
   }
+
+  const isLoading = form.formState.isSubmitting;
 
   return (
     <Dialog>
@@ -91,6 +98,7 @@ export function CreateServerModal() {
                             field.onChange(fileUrl);
                           }
                         }}
+                        disabled={isLoading}
                       />
                     </div>
                   </FormControl>
@@ -105,14 +113,20 @@ export function CreateServerModal() {
                 <FormItem>
                   <FormLabel>Server Name</FormLabel>
                   <FormControl>
-                    <Input placeholder="Enter server name" {...field} />
+                    <Input
+                      placeholder="Enter server name"
+                      {...field}
+                      disabled={isLoading}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
             <DialogFooter>
-              <Button type="submit">Create Server</Button>
+              <Button type="submit" disabled={isLoading}>
+                Create Server
+              </Button>
             </DialogFooter>
           </form>
         </Form>
