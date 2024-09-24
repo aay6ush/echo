@@ -25,7 +25,14 @@ export const { auth, handlers, signIn, signOut } = NextAuth({
       if (!existingUser || !existingUser?.emailVerified) return false;
       return true;
     },
+    async session({ session, token }) {
+      if (token.sub && session.user) {
+        session.user.id = token.sub;
+      }
+      return session;
+    },
   },
+
   adapter: PrismaAdapter(prisma),
   session: { strategy: "jwt" },
   ...authConfig,
