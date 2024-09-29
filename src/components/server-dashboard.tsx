@@ -15,10 +15,29 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
 import {
   UserPlus,
   Copy,
@@ -34,11 +53,15 @@ import {
   Star,
   CircleUser,
   MoreVertical,
+  Hash,
+  Volume2,
+  Video,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { Server, User as PrismaUser } from "@prisma/client";
 import { EditServerModal } from "./edit-server-modal";
 import ManageMemberDialog from "./manage-member-dialog";
+import { CreateChannelModal } from "./create-channel-modal";
 
 type ServerWithMembers = Server & {
   members: (PrismaUser & { role: string })[];
@@ -56,6 +79,7 @@ export default function ServerDashboard({
   const [serverSettingsModalOpen, setServerSettingsModalOpen] = useState(false);
   const [inviteModalOpen, setInviteModalOpen] = useState(false);
   const [manageMembersOpen, setManageMembersOpen] = useState(false);
+  const [createChannelOpen, setCreateChannelOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const [mounted, setMounted] = useState(false);
   const { theme, setTheme } = useTheme();
@@ -79,16 +103,12 @@ export default function ServerDashboard({
 
   const handleCopyInviteLink = () => {
     if (selectedServer) {
-      const inviteLink = `http://localhost:3000/userServers/invite/${selectedServer.id}`;
+      const inviteLink = `http://localhost:3000/servers/invite/${selectedServer.id}`;
       navigator.clipboard.writeText(inviteLink).then(() => {
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
       });
     }
-  };
-
-  const handleServerSettings = () => {
-    setServerSettingsModalOpen(true);
   };
 
   if (!mounted) return null;
@@ -154,7 +174,9 @@ export default function ServerDashboard({
                       <Users className="mr-2 h-4 w-4" />
                       <span>Manage Members</span>
                     </DropdownMenuItem>
-                    <DropdownMenuItem>
+                    <DropdownMenuItem
+                      onSelect={() => setCreateChannelOpen(true)}
+                    >
                       <PlusCircle className="mr-2 h-4 w-4" />
                       <span>Create Channel</span>
                     </DropdownMenuItem>
@@ -270,10 +292,16 @@ export default function ServerDashboard({
         selectedServer={selectedServer}
       />
 
+      {/* Edit Server Modal */}
       <EditServerModal
         open={serverSettingsModalOpen}
         onOpenChange={setServerSettingsModalOpen}
         server={selectedServer}
+      />
+
+      <CreateChannelModal
+        open={createChannelOpen}
+        onOpenChange={setCreateChannelOpen}
       />
     </div>
   );
