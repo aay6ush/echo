@@ -17,6 +17,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   UserPlus,
   Copy,
@@ -28,20 +30,32 @@ import {
   User,
   Sun,
   Moon,
+  Shield,
+  Star,
+  CircleUser,
+  MoreVertical,
 } from "lucide-react";
 import { useTheme } from "next-themes";
-import { Server } from "@prisma/client";
+import { Server, User as PrismaUser } from "@prisma/client";
 import { EditServerModal } from "./edit-server-modal";
+import ManageMemberDialog from "./manage-member-dialog";
+
+type ServerWithMembers = Server & {
+  members: (PrismaUser & { role: string })[];
+};
 
 export default function ServerDashboard({
   userServers,
   server,
 }: {
-  userServers: Server[];
+  userServers: ServerWithMembers[];
+  server: ServerWithMembers;
 }) {
-  const [selectedServer, setSelectedServer] = useState(server);
-  const [serverSettingsModalOpen, setServerSettingsModalOpen] = useState(false); // State for server settings modal
+  const [selectedServer, setSelectedServer] =
+    useState<ServerWithMembers>(server);
+  const [serverSettingsModalOpen, setServerSettingsModalOpen] = useState(false);
   const [inviteModalOpen, setInviteModalOpen] = useState(false);
+  const [manageMembersOpen, setManageMembersOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const [mounted, setMounted] = useState(false);
   const { theme, setTheme } = useTheme();
@@ -74,7 +88,7 @@ export default function ServerDashboard({
   };
 
   const handleServerSettings = () => {
-    setServerSettingsModalOpen(true); // Open server settings modal
+    setServerSettingsModalOpen(true);
   };
 
   if (!mounted) return null;
@@ -134,7 +148,9 @@ export default function ServerDashboard({
                       <Settings className="mr-2 h-4 w-4" />
                       <span>Server Settings</span>
                     </DropdownMenuItem>
-                    <DropdownMenuItem>
+                    <DropdownMenuItem
+                      onSelect={() => setManageMembersOpen(true)}
+                    >
                       <Users className="mr-2 h-4 w-4" />
                       <span>Manage Members</span>
                     </DropdownMenuItem>
@@ -151,52 +167,7 @@ export default function ServerDashboard({
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
-              {/* <ScrollArea className="h-[calc(100vh-8rem)]">
-                <div className="space-y-4">
-                  <div>
-                    <h3 className="mb-2 text-sm font-semibold text-gray-500 dark:text-gray-400">
-                      Text Channels
-                    </h3>
-                    {selectedServer.channels.text.map((channel) => (
-                      <div
-                        key={channel}
-                        className="flex items-center space-x-2 py-1 px-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700"
-                      >
-                        <Hash className="h-4 w-4" />
-                        <span>{channel}</span>
-                      </div>
-                    ))}
-                  </div>
-                  <div>
-                    <h3 className="mb-2 text-sm font-semibold text-gray-500 dark:text-gray-400">
-                      Voice Channels
-                    </h3>
-                    {selectedServer.channels.voice.map((channel) => (
-                      <div
-                        key={channel}
-                        className="flex items-center space-x-2 py-1 px-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700"
-                      >
-                        <Volume2 className="h-4 w-4" />
-                        <span>{channel}</span>
-                      </div>
-                    ))}
-                  </div>
-                  <div>
-                    <h3 className="mb-2 text-sm font-semibold text-gray-500 dark:text-gray-400">
-                      Video Channels
-                    </h3>
-                    {selectedServer.channels.video.map((channel) => (
-                      <div
-                        key={channel}
-                        className="flex items-center space-x-2 py-1 px-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700"
-                      >
-                        <Video className="h-4 w-4" />
-                        <span>{channel}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </ScrollArea> */}
+              {/* Channel list would go here */}
             </motion.div>
           )}
         </AnimatePresence>
@@ -226,7 +197,7 @@ export default function ServerDashboard({
               <span className="sr-only">Toggle theme</span>
             </Button>
           </div>
-          <h1 className="text-2xl font-bold mb-6">Your userServers</h1>
+          <h1 className="text-2xl font-bold mb-6">Your Servers</h1>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {userServers.map((server) => (
               <motion.div
@@ -243,7 +214,7 @@ export default function ServerDashboard({
                       {server.name}
                     </h2>
                     <p className="text-sm text-gray-500 dark:text-gray-400">
-                      {Object.values(server.channels).flat().length} channels
+                      {server.members.length} members
                     </p>
                   </CardContent>
                 </Card>
@@ -275,7 +246,7 @@ export default function ServerDashboard({
           <div className="flex items-center space-x-2">
             <Input
               readOnly
-              value={`http://localhost:3000/userServers/invite/${selectedServer?.id}`}
+              value={`http://localhost:3000/servers/invite/${selectedServer?.id}`}
               className="flex-grow"
             />
             <Button onClick={handleCopyInviteLink} className="flex-shrink-0">
@@ -291,6 +262,13 @@ export default function ServerDashboard({
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Manage Members Dialog */}
+      <ManageMemberDialog
+        open={manageMembersOpen}
+        onOpenChange={setManageMembersOpen}
+        selectedServer={selectedServer}
+      />
 
       <EditServerModal
         open={serverSettingsModalOpen}

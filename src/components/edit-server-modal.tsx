@@ -73,10 +73,8 @@ export function EditServerModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[425px] z-50">
         <DialogHeader>
-          <DialogTitle>Create New Server</DialogTitle>
-          <DialogDescription>
-            Add a new server to your list. Choose a name and upload a logo.
-          </DialogDescription>
+          <DialogTitle>Edit the server</DialogTitle>
+          <DialogDescription>Change the server name and logo</DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">

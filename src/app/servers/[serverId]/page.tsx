@@ -23,7 +23,11 @@ export default async function ServerPage({
       },
     },
     include: {
-      members: true,
+      members: {
+        include: {
+          user: true,
+        },
+      },
       channels: true,
     },
   });
@@ -33,6 +37,8 @@ export default async function ServerPage({
   }
 
   const server = userServers.find((server) => server.id === serverId);
+
+  console.log(server);
 
   return (
     <div>
