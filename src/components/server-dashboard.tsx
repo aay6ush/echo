@@ -11,15 +11,23 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import {
+  UserPlus,
+  Copy,
+  Check,
   PlusCircle,
   Settings,
   Users,
-  MoreVertical,
-  UserPlus,
   Trash2,
+  User,
   Sun,
   Moon,
-  User,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { Server } from "@prisma/client";
@@ -32,6 +40,8 @@ export default function ServerDashboard({
   const [selectedServer, setSelectedServer] = useState(null);
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
+  const [inviteModalOpen, setInviteModalOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     setMounted(true);
@@ -50,10 +60,19 @@ export default function ServerDashboard({
     setTheme(theme === "dark" ? "light" : "dark");
   };
 
+  const handleCopyInviteLink = () => {
+    const inviteLink = `http://localhost:3000/userServers/invite/${selectedServer.id}`;
+    navigator.clipboard.writeText(inviteLink).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
+
   if (!mounted) return null;
 
   return (
     <div className="flex h-screen bg-gray-100 dark:bg-gray-900">
+      {/* Server List Sidebar */}
       <div className="w-20 bg-gray-200 dark:bg-gray-800 p-3 flex flex-col items-center">
         {userServers.map((server) => (
           <motion.div
@@ -76,7 +95,9 @@ export default function ServerDashboard({
         </motion.div>
       </div>
 
+      {/* Main Content */}
       <div className="flex-1 flex">
+        {/* Channel Sidebar */}
         <AnimatePresence>
           {selectedServer && (
             <motion.div
@@ -90,11 +111,11 @@ export default function ServerDashboard({
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" size="icon">
-                      <MoreVertical className="h-4 w-4" />
+                      <UserPlus className="h-4 w-4" />
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent>
-                    <DropdownMenuItem>
+                    <DropdownMenuItem onSelect={() => setInviteModalOpen(true)}>
                       <UserPlus className="mr-2 h-4 w-4" />
                       <span>Invite People</span>
                     </DropdownMenuItem>
@@ -121,54 +142,48 @@ export default function ServerDashboard({
               </div>
               {/* <ScrollArea className="h-[calc(100vh-8rem)]">
                 <div className="space-y-4">
-                  {selectedServer.channels.text.length > 0 && (
-                    <div>
-                      <h3 className="mb-2 text-sm font-semibold text-gray-500 dark:text-gray-400">
-                        Text Channels
-                      </h3>
-                      {selectedServer.channels.text.map((channel) => (
-                        <div
-                          key={channel}
-                          className="flex items-center space-x-2 py-1 px-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700"
-                        >
-                          <Hash className="h-4 w-4" />
-                          <span>{channel}</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  {selectedServer.channels.voice.length > 0 && (
-                    <div>
-                      <h3 className="mb-2 text-sm font-semibold text-gray-500 dark:text-gray-400">
-                        Voice Channels
-                      </h3>
-                      {selectedServer.channels.voice.map((channel) => (
-                        <div
-                          key={channel}
-                          className="flex items-center space-x-2 py-1 px-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700"
-                        >
-                          <Volume2 className="h-4 w-4" />
-                          <span>{channel}</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  {selectedServer.channels.video.length > 0 && (
-                    <div>
-                      <h3 className="mb-2 text-sm font-semibold text-gray-500 dark:text-gray-400">
-                        Video Channels
-                      </h3>
-                      {selectedServer.channels.video.map((channel) => (
-                        <div
-                          key={channel}
-                          className="flex items-center space-x-2 py-1 px-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700"
-                        >
-                          <Video className="h-4 w-4" />
-                          <span>{channel}</span>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                  <div>
+                    <h3 className="mb-2 text-sm font-semibold text-gray-500 dark:text-gray-400">
+                      Text Channels
+                    </h3>
+                    {selectedServer.channels.text.map((channel) => (
+                      <div
+                        key={channel}
+                        className="flex items-center space-x-2 py-1 px-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700"
+                      >
+                        <Hash className="h-4 w-4" />
+                        <span>{channel}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <div>
+                    <h3 className="mb-2 text-sm font-semibold text-gray-500 dark:text-gray-400">
+                      Voice Channels
+                    </h3>
+                    {selectedServer.channels.voice.map((channel) => (
+                      <div
+                        key={channel}
+                        className="flex items-center space-x-2 py-1 px-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700"
+                      >
+                        <Volume2 className="h-4 w-4" />
+                        <span>{channel}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <div>
+                    <h3 className="mb-2 text-sm font-semibold text-gray-500 dark:text-gray-400">
+                      Video Channels
+                    </h3>
+                    {selectedServer.channels.video.map((channel) => (
+                      <div
+                        key={channel}
+                        className="flex items-center space-x-2 py-1 px-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700"
+                      >
+                        <Video className="h-4 w-4" />
+                        <span>{channel}</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </ScrollArea> */}
             </motion.div>
@@ -239,6 +254,32 @@ export default function ServerDashboard({
           </div>
         </div>
       </div>
+
+      {/* Invite Modal */}
+      <Dialog open={inviteModalOpen} onOpenChange={setInviteModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Invite People to {selectedServer?.name}</DialogTitle>
+          </DialogHeader>
+          <div className="flex items-center space-x-2">
+            <Input
+              readOnly
+              value={`http://localhost:3000/userServers/invite/${selectedServer?.id}`}
+              className="flex-grow"
+            />
+            <Button onClick={handleCopyInviteLink} className="flex-shrink-0">
+              {copied ? (
+                <Check className="h-4 w-4" />
+              ) : (
+                <Copy className="h-4 w-4" />
+              )}
+              <span className="sr-only">
+                {copied ? "Copied" : "Copy invite link"}
+              </span>
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
