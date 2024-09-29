@@ -16,28 +16,9 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import * as z from "zod";
 import {
   UserPlus,
   Copy,
@@ -49,19 +30,14 @@ import {
   User,
   Sun,
   Moon,
-  Shield,
-  Star,
-  CircleUser,
-  MoreVertical,
-  Hash,
-  Volume2,
-  Video,
+  LogOut,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { Server, User as PrismaUser } from "@prisma/client";
 import { EditServerModal } from "./edit-server-modal";
 import ManageMemberDialog from "./manage-member-dialog";
 import { CreateChannelModal } from "./create-channel-modal";
+import axios from "axios";
 
 type ServerWithMembers = Server & {
   members: (PrismaUser & { role: string })[];
@@ -70,9 +46,11 @@ type ServerWithMembers = Server & {
 export default function ServerDashboard({
   userServers,
   server,
+  currentUser,
 }: {
   userServers: ServerWithMembers[];
   server: ServerWithMembers;
+  currentUser: PrismaUser;
 }) {
   const [selectedServer, setSelectedServer] =
     useState<ServerWithMembers>(server);
@@ -80,6 +58,7 @@ export default function ServerDashboard({
   const [inviteModalOpen, setInviteModalOpen] = useState(false);
   const [manageMembersOpen, setManageMembersOpen] = useState(false);
   const [createChannelOpen, setCreateChannelOpen] = useState(false);
+  const [deleteLeaveDialogOpen, setDeleteLeaveDialogOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const [mounted, setMounted] = useState(false);
   const { theme, setTheme } = useTheme();
@@ -92,9 +71,29 @@ export default function ServerDashboard({
     console.log("Create server functionality not implemented");
   };
 
-  const handleDeleteServer = (id: string) => {
+  const handleDeleteServer = async () => {
+    try {
+      const response = await axios.delete(`/api/server/${selectedServer.id}`);
+      console.log("Server deleted successfully", response);
+    } catch (error) {
+      console.error("Error deleting server", error);
+    }
     console.log("Delete server functionality not implemented");
     setSelectedServer(null);
+    setDeleteLeaveDialogOpen(false);
+  };
+
+  const handleLeaveServer = async () => {
+    try {
+      const response = await axios.patch(
+        `/api/server/${selectedServer.id}/leave`
+      );
+      console.log("Left server successfully", response);
+      setSelectedServer(null);
+      setDeleteLeaveDialogOpen(false);
+    } catch (error) {
+      console.error("Error leaving server", error);
+    }
   };
 
   const toggleTheme = () => {
@@ -110,6 +109,10 @@ export default function ServerDashboard({
       });
     }
   };
+
+  const isAdmin =
+    selectedServer?.members.find((member) => member.user.id === currentUser.id)
+      ?.role === "ADMIN";
 
   if (!mounted) return null;
 
@@ -181,10 +184,19 @@ export default function ServerDashboard({
                       <span>Create Channel</span>
                     </DropdownMenuItem>
                     <DropdownMenuItem
-                      onClick={() => handleDeleteServer(selectedServer.id)}
+                      onClick={() => setDeleteLeaveDialogOpen(true)}
                     >
-                      <Trash2 className="mr-2 h-4 w-4" />
-                      <span>Delete Server</span>
+                      {isAdmin ? (
+                        <>
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          <span>Delete Server</span>
+                        </>
+                      ) : (
+                        <>
+                          <LogOut className="mr-2 h-4 w-4" />
+                          <span>Leave Server</span>
+                        </>
+                      )}
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
@@ -299,10 +311,44 @@ export default function ServerDashboard({
         server={selectedServer}
       />
 
+      {/* Create Channel Modal */}
       <CreateChannelModal
         open={createChannelOpen}
         onOpenChange={setCreateChannelOpen}
       />
+
+      {/* Delete/Leave Server Dialog */}
+      <Dialog
+        open={deleteLeaveDialogOpen}
+        onOpenChange={setDeleteLeaveDialogOpen}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {isAdmin ? "Delete Server" : "Leave Server"}
+            </DialogTitle>
+            <DialogDescription>
+              {isAdmin
+                ? "Are you sure you want to delete this server? This action cannot be undone."
+                : "Are you sure you want to leave this server?"}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setDeleteLeaveDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={isAdmin ? handleDeleteServer : handleLeaveServer}
+            >
+              {isAdmin ? "Delete" : "Leave"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

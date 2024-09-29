@@ -56,3 +56,50 @@ export async function PATCH(
     return new NextResponse("Internal Error", { status: 500 });
   }
 }
+export async function DELETE(
+  req: NextRequest,
+  { params: { serverId } }: { params: { serverId: string } }
+) {
+  try {
+    const user = await getUser();
+    if (!user) {
+      return new NextResponse("Unauthorized", { status: 401 });
+    }
+
+    console.log("Im here server", serverId);
+    if (!serverId) {
+      return new NextResponse("Server ID is required", { status: 400 });
+    }
+
+    const server = await prisma.server.findUnique({
+      where: { id: serverId },
+      include: {
+        members: true,
+      },
+    });
+
+    if (!server) {
+      return new NextResponse("Server not found", { status: 404 });
+    }
+
+    const isUserAdminOrModerator = server.members.some(
+      (member) =>
+        member.userId === user.id &&
+        (member.role === "ADMIN" || member.role === "MODERATOR")
+    );
+    if (!isUserAdminOrModerator) {
+      return new NextResponse("Only admins or moderators can delete server", {
+        status: 403,
+      });
+    }
+
+    await prisma.server.delete({
+      where: { id: serverId },
+    });
+
+    return new NextResponse("Server deleted successfully", { status: 200 });
+  } catch (error) {
+    console.error("Server deletion error: ", error);
+    return new NextResponse("Internal Error", { status: 500 });
+  }
+}

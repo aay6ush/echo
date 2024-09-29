@@ -42,7 +42,11 @@ export default async function ServerPage({
 
   return (
     <div>
-      <ServerDashboard userServers={userServers} server={server} />
+      <ServerDashboard
+        userServers={userServers}
+        server={server}
+        currentUser={session.user}
+      />
     </div>
   );
 }
