@@ -7,8 +7,6 @@ export default async function ServerInvitePage({
 }: {
   params: { serverId: string };
 }) {
-  console.log(serverId);
-
   const session = await auth();
   if (!session || !session.user) {
     return redirect("/auth/login");

@@ -3,7 +3,11 @@ import prisma from "../../../../prisma/db";
 import { auth } from "../../../../auth";
 import { redirect } from "next/navigation";
 
-export default async function ServerPage() {
+export default async function ServerPage({
+  params: { serverId },
+}: {
+  params: { serverId: string };
+}) {
   const session = await auth();
 
   if (!session || !session.user) {
@@ -28,9 +32,11 @@ export default async function ServerPage() {
     return redirect("/");
   }
 
+  const server = userServers.find((server) => server.id === serverId);
+
   return (
     <div>
-      <ServerDashboard userServers={userServers} />
+      <ServerDashboard userServers={userServers} server={server} />
     </div>
   );
 }

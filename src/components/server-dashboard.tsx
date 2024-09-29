@@ -31,17 +31,20 @@ import {
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { Server } from "@prisma/client";
+import { EditServerModal } from "./edit-server-modal";
 
 export default function ServerDashboard({
   userServers,
+  server,
 }: {
   userServers: Server[];
 }) {
-  const [selectedServer, setSelectedServer] = useState(null);
-  const { theme, setTheme } = useTheme();
-  const [mounted, setMounted] = useState(false);
+  const [selectedServer, setSelectedServer] = useState(server);
+  const [serverSettingsModalOpen, setServerSettingsModalOpen] = useState(false); // State for server settings modal
   const [inviteModalOpen, setInviteModalOpen] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  const { theme, setTheme } = useTheme();
 
   useEffect(() => {
     setMounted(true);
@@ -61,11 +64,17 @@ export default function ServerDashboard({
   };
 
   const handleCopyInviteLink = () => {
-    const inviteLink = `http://localhost:3000/userServers/invite/${selectedServer.id}`;
-    navigator.clipboard.writeText(inviteLink).then(() => {
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    });
+    if (selectedServer) {
+      const inviteLink = `http://localhost:3000/userServers/invite/${selectedServer.id}`;
+      navigator.clipboard.writeText(inviteLink).then(() => {
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      });
+    }
+  };
+
+  const handleServerSettings = () => {
+    setServerSettingsModalOpen(true); // Open server settings modal
   };
 
   if (!mounted) return null;
@@ -119,7 +128,9 @@ export default function ServerDashboard({
                       <UserPlus className="mr-2 h-4 w-4" />
                       <span>Invite People</span>
                     </DropdownMenuItem>
-                    <DropdownMenuItem>
+                    <DropdownMenuItem
+                      onSelect={() => setServerSettingsModalOpen(true)}
+                    >
                       <Settings className="mr-2 h-4 w-4" />
                       <span>Server Settings</span>
                     </DropdownMenuItem>
@@ -280,6 +291,12 @@ export default function ServerDashboard({
           </div>
         </DialogContent>
       </Dialog>
+
+      <EditServerModal
+        open={serverSettingsModalOpen}
+        onOpenChange={setServerSettingsModalOpen}
+        server={selectedServer}
+      />
     </div>
   );
 }
