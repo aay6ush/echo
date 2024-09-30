@@ -19,6 +19,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   UserPlus,
   Copy,
@@ -31,9 +32,12 @@ import {
   Sun,
   Moon,
   LogOut,
+  Hash,
+  Volume2,
+  Video,
 } from "lucide-react";
 import { useTheme } from "next-themes";
-import { Server, User as PrismaUser } from "@prisma/client";
+import { Server, User as PrismaUser, Channel } from "@prisma/client";
 import { EditServerModal } from "./edit-server-modal";
 import ManageMemberDialog from "./manage-member-dialog";
 import { CreateChannelModal } from "./create-channel-modal";
@@ -41,7 +45,10 @@ import axios from "axios";
 
 type ServerWithMembers = Server & {
   members: (PrismaUser & { role: string })[];
+  channels: Channel[];
 };
+
+type ChannelType = "TEXT" | "AUDIO" | "VIDEO";
 
 export default function ServerDashboard({
   userServers,
@@ -61,6 +68,8 @@ export default function ServerDashboard({
   const [deleteLeaveDialogOpen, setDeleteLeaveDialogOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const [selectedChannelType, setSelectedChannelType] =
+    useState<ChannelType>("TEXT");
   const { theme, setTheme } = useTheme();
 
   useEffect(() => {
@@ -113,6 +122,37 @@ export default function ServerDashboard({
   const isAdmin =
     selectedServer?.members.find((member) => member.user.id === currentUser.id)
       ?.role === "ADMIN";
+
+  const ChannelList = ({ type }: { type: ChannelType }) => {
+    const channels = selectedServer?.channels.filter(
+      (channel) => channel.type === type
+    );
+    const icon =
+      type === "TEXT" ? (
+        <Hash className="h-4 w-4" />
+      ) : type === "AUDIO" ? (
+        <Volume2 className="h-4 w-4" />
+      ) : (
+        <Video className="h-4 w-4" />
+      );
+
+    return (
+      <div>
+        <h3 className="mb-2 text-sm font-semibold text-gray-500 dark:text-gray-400">
+          {type} Channels
+        </h3>
+        {channels?.map((channel) => (
+          <div
+            key={channel.id}
+            className="flex items-center space-x-2 py-1 px-2 rounded hover:bg-gray-200 dark:hover:bg-gray-700 cursor-pointer"
+          >
+            {icon}
+            <span>{channel.name}</span>
+          </div>
+        ))}
+      </div>
+    );
+  };
 
   if (!mounted) return null;
 
@@ -201,7 +241,13 @@ export default function ServerDashboard({
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
-              {/* Channel list would go here */}
+              <ScrollArea className="h-[calc(100vh-8rem)]">
+                <div className="space-y-4">
+                  <ChannelList type="TEXT" />
+                  <ChannelList type="AUDIO" />
+                  <ChannelList type="VIDEO" />
+                </div>
+              </ScrollArea>
             </motion.div>
           )}
         </AnimatePresence>

@@ -123,7 +123,7 @@ export function CreateChannelModal({ open, onOpenChange }) {
                             <span>Text</span>
                           </div>
                         </SelectItem>
-                        <SelectItem value="VOICE">
+                        <SelectItem value="AUDIO">
                           <div className="flex items-center">
                             <Volume2 className="mr-2 h-4 w-4" />
                             <span>Voice</span>
